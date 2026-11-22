@@ -42,7 +42,7 @@
 - 캡션: 훅 2줄 → ✔️ 요약 3줄 → 저장/공유 유도 → 출처 → 해시태그 8~10개(#뷰티와야수 #꾸며라좀 항상 포함)
 
 ## 릴스
-- 매일 12:00 슬롯 게시물은 릴스로 올린다: 카드 렌더 후 `tools/make_reel.py`로 reel.mp4 생성, queue 항목에 type=reel, video=<raw URL>. 나머지 슬롯은 type=carousel.
+- 매일 12:00 슬롯 게시물은 릴스로 올린다: 카드 렌더 후 `tools/make_reel.py`로 reel.mp4 생성, queue 항목에 type=reel, video=https://cdn.jsdelivr.net/gh/beautynyyasu/bny-cards@main/posts/<날짜>/<post_id>/reel.mp4 (raw.githubusercontent는 mp4를 octet-stream으로 내보내 인스타가 거부할 수 있어 jsDelivr 사용). 나머지 슬롯은 type=carousel.
 - 릴스용 게시물은 첫 장(표지) 훅이 가장 강한 것으로 고른다. 영상은 무음이라 운영자가 앱에서 트렌드 음악을 얹을 수 있도록 메일에 표시.
 
 ## 이미 다룬 주제
