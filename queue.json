@@ -12,7 +12,8 @@
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-22/01_sunscreen_reapply/04.jpg",
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-22/01_sunscreen_reapply/05.jpg",
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-22/01_sunscreen_reapply/06.jpg"
-  ]
+  ],
+  "type": "carousel"
  },
  {
   "date": "2026-11-23",
@@ -26,7 +27,8 @@
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-23/01_shaving_rules/03.jpg",
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-23/01_shaving_rules/04.jpg",
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-23/01_shaving_rules/05.jpg"
-  ]
+  ],
+  "type": "carousel"
  },
  {
   "date": "2026-11-23",
@@ -41,7 +43,8 @@
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-23/02_gamer_sleep_skin/04.jpg",
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-23/02_gamer_sleep_skin/05.jpg",
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-23/02_gamer_sleep_skin/06.jpg"
-  ]
+  ],
+  "type": "carousel"
  },
  {
   "date": "2026-11-23",
@@ -55,7 +58,8 @@
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-23/03_retinol_starter/03.jpg",
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-23/03_retinol_starter/04.jpg",
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-23/03_retinol_starter/05.jpg"
-  ]
+  ],
+  "type": "carousel"
  },
  {
   "date": "2026-11-24",
@@ -69,7 +73,9 @@
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-24/01_clinic_prepaid_refund/03.jpg",
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-24/01_clinic_prepaid_refund/04.jpg",
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-24/01_clinic_prepaid_refund/05.jpg"
-  ]
+  ],
+  "type": "reel",
+  "video": "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-24/01_clinic_prepaid_refund/reel.mp4"
  },
  {
   "date": "2026-11-24",
@@ -82,6 +88,7 @@
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-24/02_balance_skin_vs_height/02.jpg",
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-24/02_balance_skin_vs_height/03.jpg",
    "https://raw.githubusercontent.com/beautynyyasu/bny-cards/main/posts/2026-11-24/02_balance_skin_vs_height/04.jpg"
-  ]
+  ],
+  "type": "carousel"
  }
 ]
