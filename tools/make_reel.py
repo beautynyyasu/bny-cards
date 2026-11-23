@@ -134,7 +134,7 @@ def build(posts_json, post_id, keep_frames=None):
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lst),
                         "-i", wav,
                         "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-shortest",
-                        "-movflags", "+faststart", str(out_dir / "reel.mp4")], check=True)
+                        "-movflags", "+faststart", "-use_editlist", "0", str(out_dir / "reel.mp4")], check=True)
     return out_dir / "reel.mp4", len(cuts), round(total, 1)
 
 
