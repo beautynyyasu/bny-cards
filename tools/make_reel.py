@@ -7,9 +7,11 @@ and an original beat with a whoosh/pop on every cut runs underneath (tools/bgm.p
 
 Usage: python3 tools/make_reel.py posts/<date>/posts.json <post_id> [<post_id> ...]
 Output: posts/<date>/<post_id>/reel.mp4
+Narration: if ELEVENLABS_API_KEY is set, each cut gets a voice line (ElevenLabs, voice ELEVENLABS_VOICE_ID)
+  and the cut stretches to fit it; posts.json may give post['narration'] = one line per cut (audio tags like [excited] ok).
 Needs: playwright + /usr/bin/google-chrome, ffmpeg >= 5, numpy, scipy, Noto Sans CJK KR.
 """
-import html, json, pathlib, re, subprocess, sys, tempfile
+import html, json, os, pathlib, re, subprocess, sys, tempfile, urllib.request
 from playwright.sync_api import sync_playwright
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from bgm import make_audio
@@ -19,6 +21,8 @@ LIME = "#C8FF2E"
 HANDLE = "@beauty_n_yyasu"
 DUR = {"hook": 2.1, "sub": 1.4, "title": 1.1, "item": 2.2, "vs": 1.7, "result": 1.6, "cta": 1.9, "handle": 1.5}
 T = 0.22  # transition length
+VOICE_ID = os.environ.get("ELEVENLABS_VOICE_ID", "h5eZa8VFAq0EQ8E81dfL")
+TTS_MODEL = os.environ.get("ELEVENLABS_MODEL", "eleven_v3")
 TRANSITIONS = ["slideleft", "zoomin", "slideup", "wipeleft", "circleopen", "slideright",
                "fadewhite", "smoothup", "coverleft", "radial", "slidedown", "revealleft"]
 
@@ -86,12 +90,12 @@ def cuts_for(post):
             if len(lines) > 1:
                 frames.append((pill + f'<div class="huge">{hl_nums(lines[0])}</div>', 0.7))
             frames.append((pill + f'<div class="huge">{hl_nums(s["headline"])}</div>', None))
-            cuts.append(dict(kind="hook", frames=frames, inv=False))
+            cuts.append(dict(kind="hook", frames=frames, inv=False, say=strip_marks(s["headline"])))
             if s.get("sub"):
-                cuts.append(dict(kind="sub", inv=False, frames=[(
+                cuts.append(dict(kind="sub", inv=False, say=strip_marks(s["sub"]), frames=[(
                     f'<div class="ghost">{esc(s["headline"])}</div><div class="big"><span class="mark">{esc(s["sub"])}</span></div>', None)]))
         elif t == "steps":
-            cuts.append(dict(kind="title", inv=True, frames=[(f'<div class="uline"></div><div class="huge">{esc(s["title"])}</div>', None)]))
+            cuts.append(dict(kind="title", inv=True, say=strip_marks(s["title"]), frames=[(f'<div class="uline"></div><div class="huge">{esc(s["title"])}</div>', None)]))
             for name, tag, desc in s["items"]:
                 tail = f'<div class="desc">{hl_nums(desc)}</div>'
                 cf = count_frames(tag) if tag else None
@@ -104,20 +108,55 @@ def cuts_for(post):
                     pill = f'<div class="pill">{esc(tag)}</div>' if tag else ""
                     frames = [(f'{pill}<div class="big">{hl_nums(name)}</div>', 0.6),
                               (f'{pill}<div class="big">{hl_nums(name)}</div>{tail}', None)]
-                cuts.append(dict(kind="item", inv=False, frames=frames))
+                say = f"{strip_marks(tag)}, {strip_marks(name)}" if tag and re.search(r"\\d", tag) else strip_marks(name)
+                cuts.append(dict(kind="item", inv=False, frames=frames, say=say))
         elif t == "versus":
             if s.get("title"):
-                cuts.append(dict(kind="title", inv=True, frames=[(f'<div class="uline"></div><div class="huge">{esc(s["title"])}</div>', None)]))
+                cuts.append(dict(kind="title", inv=True, say=strip_marks(s["title"]), frames=[(f'<div class="uline"></div><div class="huge">{esc(s["title"])}</div>', None)]))
             for key, col in (("a", "hl"), ("b", "")):
                 lines = "<br>".join(esc(x) for x in s.get(f"{key}_lines", []))
-                cuts.append(dict(kind="vs", inv=False, frames=[(f'<div class="letter {col}">{esc(s[key + "_title"])}</div><div class="big">{lines}</div>', None)]))
+                cuts.append(dict(kind="vs", inv=False, say=strip_marks(s[key + "_title"] + ", " + ", ".join(s.get(key + "_lines", []))), frames=[(f'<div class="letter {col}">{esc(s[key + "_title"])}</div><div class="big">{lines}</div>', None)]))
             if s.get("a_res") or s.get("b_res"):
-                cuts.append(dict(kind="result", inv=True, frames=[(
+                cuts.append(dict(kind="result", inv=True, say=strip_marks(s.get("a_res", "")), frames=[(
                     f'<div class="big">A <span class="mark">{esc(s.get("a_res", ""))}</span></div><div class="desc">B {esc(s.get("b_res", ""))}</div>', None)]))
         elif t == "cta":
-            cuts.append(dict(kind="cta", inv=False, frames=[(f'<div class="uline"></div><div class="huge">{hl_nums(s["headline"])}</div>', None)]))
-            cuts.append(dict(kind="handle", inv=True, frames=[(f'<div class="big">저장하고\n친구 태그</div><div class="handle">{HANDLE}</div>', None)]))
+            cuts.append(dict(kind="cta", inv=False, say=strip_marks(s["headline"]), frames=[(f'<div class="uline"></div><div class="huge">{hl_nums(s["headline"])}</div>', None)]))
+            cuts.append(dict(kind="handle", inv=True, say="", frames=[(f'<div class="big">저장하고\n친구 태그</div><div class="handle">{HANDLE}</div>', None)]))
     return cuts
+
+
+def strip_marks(t):
+    return re.sub(r"[“”\"‘’'\[\]()①②③④⑤⑥⑦⑧⑨⑩]", "", t).replace("\n", " ").strip()
+
+
+def narration_for(post, cuts):
+    """One short line per cut. posts.json may override with post['narration'] (list, one per cut)."""
+    if post.get("narration") and len(post["narration"]) == len(cuts):
+        return post["narration"]
+    lines = []
+    for c in cuts:
+        k, txt = c["kind"], c.get("say", "")
+        if k == "hook":
+            lines.append(f"[excited] {txt}")
+        elif k in ("title", "result"):
+            lines.append(f"[emphatic] {txt}")
+        elif k == "handle":
+            lines.append("[excited] 저장하고, 친구 태그! 꾸며라 좀!")
+        else:
+            lines.append(txt)
+    return lines
+
+
+def tts(text, out_mp3):
+    key = os.environ["ELEVENLABS_API_KEY"]
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}?output_format=mp3_44100_128"
+    body = json.dumps({"text": text, "model_id": TTS_MODEL, "language_code": "ko"}).encode()
+    req = urllib.request.Request(url, data=body, headers={"xi-api-key": key, "Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        pathlib.Path(out_mp3).write_bytes(r.read())
+    out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(out_mp3)],
+                         capture_output=True, text=True, check=True).stdout
+    return float(out.strip())
 
 
 def page(body, i, n, inv):
@@ -142,9 +181,18 @@ def build(posts_json, post_id, keep_frames=None):
         tmp = pathlib.Path(tmp)
         b = pw.chromium.launch(executable_path="/usr/bin/google-chrome")
         pg = b.new_page(viewport={"width": W, "height": H})
+        voice = []  # (mp3 path or None) per cut
+        if os.environ.get("ELEVENLABS_API_KEY"):
+            for i, line in enumerate(narration_for(post, cuts)):
+                if not line.strip():
+                    voice.append((None, 0.0)); continue
+                mp3 = tmp / f"n{i:02d}.mp3"
+                voice.append((mp3, tts(line, mp3)))
+        else:
+            voice = [(None, 0.0)] * len(cuts)
         segs, durs = [], []
         for i, cut in enumerate(cuts):
-            total = DUR[cut["kind"]]
+            total = max(DUR[cut["kind"]], voice[i][1] + 0.45)
             fixed = sum(d for _, d in cut["frames"] if d)
             pngs = []
             for j, (body, d) in enumerate(cut["frames"]):
@@ -186,7 +234,25 @@ def build(posts_json, post_id, keep_frames=None):
             prev = f"[v{k}]"
         total = sum(durs) - T * (len(segs) - 1)
         wav = make_audio([o + T / 2 for o in offsets], total, str(tmp / "bgm.wav"))
-        run(inputs + ["-i", wav, "-filter_complex", ";".join(filt), "-map", prev, "-map", f"{len(segs)}:a"]
+        starts = [0.0] + offsets
+        vin = [(p, st) for (p, _), st in zip(voice, starts) if p]
+        audio_in = ["-i", wav]
+        for p, _ in vin:
+            audio_in += ["-i", str(p)]
+        a0 = len(segs)
+        if vin:
+            parts = [f"[{a0}:a]volume=0.35[bg]"]
+            labels = ["[bg]"]
+            for j, (_, st) in enumerate(vin):
+                ms = int((st + 0.12) * 1000)
+                parts.append(f"[{a0 + 1 + j}:a]aresample=44100,adelay={ms}|{ms},volume=1.6[n{j}]")
+                labels.append(f"[n{j}]")
+            parts.append(f"{''.join(labels)}amix=inputs={len(labels)}:normalize=0:duration=first,alimiter=limit=0.95[aout]")
+            amap = "[aout]"
+            filt += parts
+        else:
+            amap = f"{a0}:a"
+        run(inputs + audio_in + ["-filter_complex", ";".join(filt), "-map", prev, "-map", amap]
             + enc + ["-c:a", "aac", "-b:a", "128k", "-ar", "44100", "-shortest",
                      "-movflags", "+faststart", "-use_editlist", "0", str(out_dir / "reel.mp4")])
     return out_dir / "reel.mp4", len(cuts), round(total, 1)
