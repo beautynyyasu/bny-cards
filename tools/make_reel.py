@@ -5,10 +5,13 @@ numbers highlighted), each with a quick punch-in, then hard-cut together.
 
 Usage: python3 tools/make_reel.py posts/<date>/posts.json <post_id> [<post_id> ...]
 Output: posts/<date>/<post_id>/reel.mp4
-Needs: playwright + /usr/bin/google-chrome, ffmpeg, Noto Sans CJK KR.
+Needs: playwright + /usr/bin/google-chrome, ffmpeg, numpy, scipy, Noto Sans CJK KR.
+Audio: original beat + whoosh/pop on every cut (tools/bgm.py), copyright-free.
 """
 import html, json, pathlib, re, subprocess, sys, tempfile
 from playwright.sync_api import sync_playwright
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+from bgm import make_audio
 
 W, H, FPS = 1080, 1920, 30
 LIME = "#C8FF2E"
@@ -123,8 +126,13 @@ def build(posts_json, post_id, keep_frames=None):
         lst = tmp / "list.txt"
         lst.write_text("".join(f"file '{s}'\n" for s in segs))
         total = sum(DUR[k] for k, _ in cuts)
+        times, acc = [], 0.0
+        for k, _ in cuts:
+            times.append(acc)
+            acc += DUR[k]
+        wav = make_audio(times[1:], total, str(tmp / "bgm.wav"))
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lst),
-                        "-f", "lavfi", "-t", f"{total:.2f}", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
+                        "-i", wav,
                         "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-shortest",
                         "-movflags", "+faststart", str(out_dir / "reel.mp4")], check=True)
     return out_dir / "reel.mp4", len(cuts), round(total, 1)
