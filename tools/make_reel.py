@@ -21,9 +21,9 @@ LIME = "#C8FF2E"
 HANDLE = "@beauty_n_yyasu"
 DUR = {"hook": 2.1, "sub": 1.4, "title": 1.1, "item": 2.2, "vs": 1.7, "result": 1.6, "cta": 1.9, "handle": 1.5}
 T = 0.22  # transition length
-VOICE_ID = os.environ.get("ELEVENLABS_VOICE_ID", "h5eZa8VFAq0EQ8E81dfL")
+VOICE_ID = os.environ.get("ELEVENLABS_VOICE_ID", "TX3LPaxmHKxFdv7VOQHJ")  # Liam (premade, works on free plan)
 TTS_MODEL = os.environ.get("ELEVENLABS_MODEL", "eleven_v3")
-VOICE_TEMPO = float(os.environ.get("NARRATION_TEMPO", "1.0"))  # >1 speeds narration up (ffmpeg atempo, pitch kept)
+VOICE_TEMPO = float(os.environ.get("NARRATION_TEMPO", "1.3"))  # >1 speeds narration up (ffmpeg atempo, pitch kept)
 TRANSITIONS = ["slideleft", "zoomin", "slideup", "wipeleft", "circleopen", "slideright",
                "fadewhite", "smoothup", "coverleft", "radial", "slidedown", "revealleft"]
 

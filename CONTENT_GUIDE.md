@@ -43,6 +43,7 @@
 
 ## 릴스
 - 매일 12:00 슬롯 게시물은 릴스로 올린다: `python3 tools/make_reel.py posts/<날짜>/posts.json <post_id>`로 reel.mp4 생성(슬라이드를 한 포인트씩 컷으로 쪼개 큰 글씨로 빠르게 전환). 컷은 slides의 문구에서 바로 만들어지므로 items 제목은 짧고(12자 이내) 숫자 태그를 적극 활용, queue 항목에 type=reel, video=https://cdn.jsdelivr.net/gh/beautynyyasu/bny-cards@main/posts/<날짜>/<post_id>/reel.mp4 (raw.githubusercontent는 mp4를 octet-stream으로 내보내 인스타가 거부할 수 있어 jsDelivr 사용). 나머지 슬롯은 type=carousel.
+- **내레이션**: ElevenLabs 키가 있으면 기본 목소리 Liam(무료 플랜 사용 가능), 1.3배속(`NARRATION_TEMPO`)으로 자동 적용. posts.json에 `narration` 배열(컷 수와 같은 개수)을 **반드시 직접** 쓰고, 숫자는 TTS가 잘못 읽지 않도록 **한글로 풀어 쓸 것**(5배 → 다섯 배, 35.8% → 삼십오 점 팔 퍼센트, 2026년 → 이천이십육 년, 1회 → 한 번). 화면 자막은 숫자 그대로. 짧고 빠른 말투.
 - 릴스용 게시물은 첫 장(표지) 훅이 가장 강한 것으로 고른다. 영상은 무음이라 운영자가 앱에서 트렌드 음악을 얹을 수 있도록 메일에 표시.
 
 ## 이미 다룬 주제
