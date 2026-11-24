@@ -23,6 +23,7 @@ DUR = {"hook": 2.1, "sub": 1.4, "title": 1.1, "item": 2.2, "vs": 1.7, "result": 
 T = 0.22  # transition length
 VOICE_ID = os.environ.get("ELEVENLABS_VOICE_ID", "h5eZa8VFAq0EQ8E81dfL")
 TTS_MODEL = os.environ.get("ELEVENLABS_MODEL", "eleven_v3")
+VOICE_TEMPO = float(os.environ.get("NARRATION_TEMPO", "1.0"))  # >1 speeds narration up (ffmpeg atempo, pitch kept)
 TRANSITIONS = ["slideleft", "zoomin", "slideup", "wipeleft", "circleopen", "slideright",
                "fadewhite", "smoothup", "coverleft", "radial", "slidedown", "revealleft"]
 
@@ -154,6 +155,10 @@ def tts(text, out_mp3):
     req = urllib.request.Request(url, data=body, headers={"xi-api-key": key, "Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=60) as r:
         pathlib.Path(out_mp3).write_bytes(r.read())
+    if abs(VOICE_TEMPO - 1.0) > 1e-3:
+        fast = pathlib.Path(out_mp3).with_suffix(".fast.mp3")
+        run(["-i", str(out_mp3), "-af", f"atempo={VOICE_TEMPO}", str(fast)])
+        fast.replace(out_mp3)
     out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(out_mp3)],
                          capture_output=True, text=True, check=True).stdout
     return float(out.strip())
